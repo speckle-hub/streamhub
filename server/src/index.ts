@@ -39,13 +39,39 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
 });
 
-app.get('/api/health/db', async (req, res) => {
+app.get('/api/diag', async (req, res) => {
+  const diag: any = {
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL: process.env.VERCEL,
+      TMDB_KEY_SET: !!process.env.TMDB_API_KEY,
+      POSTGRES_SET: !!process.env.POSTGRES_PRISMA_URL,
+      KV_SET: !!process.env.KV_URL,
+    },
+    database: 'unknown',
+    kv: 'unknown',
+    tmdb: 'unknown',
+  };
+
   try {
     await prisma.$queryRaw`SELECT 1`;
-    res.json({ status: 'ok', database: 'connected' });
+    diag.database = 'connected';
   } catch (err: any) {
-    res.status(500).json({ status: 'error', database: 'disconnected', message: err.message });
+    diag.database = `error: ${err.message}`;
   }
+
+  const { cache } = require('./services/cache');
+  diag.kv = cache.isRedisHealthy() ? 'connected' : 'disconnected (using memory fallback)';
+
+  const { tmdb: tmdbService } = require('./services/tmdb');
+  try {
+    const trending = await tmdbService.getTrending('movie', 'day');
+    diag.tmdb = trending.length > 0 ? 'connected' : 'no_results (unauthorized or empty)';
+  } catch (err: any) {
+    diag.tmdb = `error: ${err.message}`;
+  }
+
+  res.json(diag);
 });
 
 app.get('/api/health/addons', (_req, res) => {

@@ -81,13 +81,15 @@ export class TMDBService {
     if (cached) return JSON.parse(cached);
 
     try {
+      console.log(`[TMDB] Fetching trending ${type}/${timeWindow}`);
       const res = await axios.get(`${TMDB_BASE}/trending/${type}/${timeWindow}`, {
         params: { api_key: API_KEY },
       });
       const results = res.data.results || [];
-      await cache.set(cacheKey, JSON.stringify(results), 21600); // 6h cache
+      await cache.set(cacheKey, JSON.stringify(results), 21600);
       return results;
-    } catch (err) {
+    } catch (err: any) {
+      console.error(`[TMDB] Trending Error for ${type}:`, err.response?.status, err.message);
       return [];
     }
   }
