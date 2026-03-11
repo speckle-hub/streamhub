@@ -14,6 +14,8 @@ import homeRouter from './routes/home';
 import userRouter from './routes/user';
 import nsfwRouter from './routes/nsfw';
 import { startAddonHealthMonitor, getAddonHealthSnapshot } from './services/addonHealth';
+import { cache } from './services/cache';
+import { tmdb as tmdbService } from './services/tmdb';
 
 dotenv.config();
 
@@ -60,10 +62,8 @@ app.get('/api/diag', async (req, res) => {
     diag.database = `error: ${err.message}`;
   }
 
-  const { cache } = require('./services/cache');
   diag.kv = cache.isRedisHealthy() ? 'connected' : 'disconnected (using memory fallback)';
 
-  const { tmdb: tmdbService } = require('./services/tmdb');
   try {
     const trending = await tmdbService.getTrending('movie', 'day');
     diag.tmdb = trending.length > 0 ? 'connected' : 'no_results (unauthorized or empty)';
