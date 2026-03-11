@@ -1,0 +1,248 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+}
+
+.modal {
+  background: var(--surface, #141414);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 900px;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.8);
+  animation: slideUp 0.25s ease;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero */
+.hero {
+  position: relative;
+  height: 280px;
+  background: #0a0a0a center/cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+  padding: 24px;
+  gap: 20px;
+}
+
+.heroGrad {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(20,20,20,1) 0%, rgba(20,20,20,0.3) 60%, transparent 100%);
+}
+
+.poster {
+  position: relative;
+  z-index: 1;
+  width: 100px;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+  flex-shrink: 0;
+  object-fit: cover;
+  aspect-ratio: 2/3;
+}
+
+.heroInfo {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+.metaRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.7);
+}
+
+.genre {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 2px 8px;
+}
+
+.closeBtn {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s;
+}
+.closeBtn:hover { background: rgba(255,255,255,0.25); }
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 4px;
+  padding: 0 24px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 14px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.tab:hover { color: rgba(255,255,255,0.8); }
+.activeTab {
+  color: #fff;
+  border-bottom-color: var(--accent, #e50914);
+}
+
+.badge {
+  background: var(--accent, #e50914);
+  color: #fff;
+  font-size: 0.7rem;
+  border-radius: 99px;
+  padding: 1px 7px;
+  font-weight: 700;
+}
+
+/* Body */
+.body {
+  padding: 20px 24px 28px;
+  min-height: 200px;
+}
+
+.playerWrap {
+  margin-bottom: 20px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.desc {
+  color: rgba(255,255,255,0.75);
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+/* Sources list */
+.sourcesList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.loadingRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255,255,255,0.5);
+  font-size: 0.9rem;
+  padding: 20px 0;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: var(--accent, #e50914);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.empty {
+  color: rgba(255,255,255,0.4);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 32px 0;
+}
+
+.sourceRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 8px;
+  padding: 10px 14px;
+  transition: background 0.2s;
+}
+.sourceRow:hover { background: rgba(255,255,255,0.07); }
+.sourceRow.active { border-color: var(--accent, #e50914); }
+
+.qualityBadge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 2px 7px;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+
+.sourceName {
+  flex: 1;
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.size {
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+
+.addonTag {
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+
+.playBtn {
+  background: var(--accent, #e50914);
+  border: none;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: opacity 0.2s;
+}
+.playBtn:hover { opacity: 0.85; }

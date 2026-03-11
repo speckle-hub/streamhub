@@ -1,0 +1,216 @@
+.main {
+  min-height: 100vh;
+  background: var(--bg);
+  color: #fff;
+  padding-bottom: 5rem;
+}
+
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 5%;
+  z-index: 1000;
+  background: linear-gradient(to bottom, rgba(10, 10, 12, 0.9), transparent);
+  backdrop-filter: blur(10px);
+  transition: background 0.3s ease;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--accent);
+}
+
+.nav {
+  display: flex;
+  gap: 2rem;
+}
+
+.navLink {
+  color: rgba(255, 255, 255, 0.7);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.navLink:hover {
+  color: var(--primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.nsfwLink {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #ff4757;
+}
+
+.nsfwBadge {
+  font-size: 10px;
+  background: #ff4757;
+  color: white;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 800;
+}
+.searchTrigger {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.5rem 1rem;
+  border-radius: 99px;
+  color: rgba(255, 255, 255, 0.5);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.searchTrigger:hover {
+  color: rgba(255,255,255,0.8);
+}
+.searchIcon { font-size: 1rem; }
+.searchText { flex: 1; text-align: left; }
+.kbd {
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-size: 0.75rem;
+  font-family: monospace;
+}
+
+/* Hero */
+.hero {
+  position: relative;
+  height: 70vh;
+  min-height: 480px;
+  display: flex;
+  align-items: center;
+  padding: 0 64px;
+  overflow: hidden;
+}
+
+.heroBg {
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse 60% 80% at 70% 50%, rgba(229,9,20,0.08) 0%, transparent 70%),
+    linear-gradient(135deg, #0a0a0a 0%, #111 50%, #0a0a0a 100%);
+  z-index: 0;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: 600px;
+}
+
+.heroBadge {
+  display: inline-block;
+  background: var(--accent, #e50914);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  padding: 4px 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+}
+
+.heroTitle {
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+  background: linear-gradient(to right, #fff, rgba(255,255,255,0.75));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.heroDesc {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.6);
+  line-height: 1.7;
+  margin-bottom: 32px;
+}
+.heroDesc kbd {
+  background: rgba(255,255,255,0.12);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-family: monospace;
+  font-size: 0.85em;
+  color: rgba(255,255,255,0.8);
+}
+
+.heroActions {
+  display: flex;
+  gap: 12px;
+}
+
+.heroPlayBtn {
+  background: var(--accent, #e50914);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 28px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+.heroPlayBtn:hover { opacity: 0.9; transform: scale(1.02); }
+
+/* Sections */
+.section {
+  padding: 48px 64px;
+}
+
+.sectionTitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: -0.02em;
+}
+
+.categoryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.categoryCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 28px 16px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  color: #fff;
+  text-align: center;
+}
+.categoryCard:hover {
+  background: rgba(255,255,255,0.08);
+  transform: translateY(-3px);
+  border-color: rgba(255,255,255,0.12);
+}
+
+.categoryEmoji { font-size: 2.4rem; }
+.categoryCard strong { font-size: 0.95rem; font-weight: 700; }
+.categoryCard small { font-size: 0.78rem; color: rgba(255,255,255,0.45); }

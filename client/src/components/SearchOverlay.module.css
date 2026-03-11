@@ -1,0 +1,108 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(6px);
+  z-index: 300;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 80px 16px 40px;
+}
+
+.panel {
+  background: var(--surface, #1a1a1a);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 720px;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.9);
+  animation: appear 0.2s ease;
+}
+
+@keyframes appear {
+  from { opacity: 0; transform: scale(0.97) translateY(-10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  gap: 12px;
+}
+
+.searchIcon {
+  font-size: 1.3rem;
+  color: rgba(255,255,255,0.4);
+  flex-shrink: 0;
+}
+
+.input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-size: 1.05rem;
+  font-family: inherit;
+  caret-color: var(--accent, #e50914);
+}
+.input::placeholder { color: rgba(255,255,255,0.3); }
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.1);
+  border-top-color: var(--accent, #e50914);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.closeBtn {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  color: rgba(255,255,255,0.6);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+  flex-shrink: 0;
+}
+.closeBtn:hover { background: rgba(255,255,255,0.15); }
+
+.resultsMeta {
+  padding: 10px 16px 6px;
+  font-size: 0.75rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 12px;
+  padding: 8px 16px 20px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.empty, .hint {
+  padding: 32px;
+  text-align: center;
+  color: rgba(255,255,255,0.35);
+  font-size: 0.9rem;
+}
+
+.hint kbd {
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.8rem;
+  font-family: monospace;
+}
