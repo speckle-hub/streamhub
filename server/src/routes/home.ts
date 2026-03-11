@@ -23,7 +23,7 @@ router.get('/', async (req, res) => {
         percent: { gt: 0, lt: 90 }
       },
       include: {
-        content: true // Relation name is still 'content'
+        content: true 
       },
       orderBy: { updatedAt: 'desc' },
       take: 20
@@ -38,13 +38,27 @@ router.get('/', async (req, res) => {
     });
 
     res.json({
-      trending: {
-        movies: trendingMovies.slice(0, 10),
-        tv: trendingTV.slice(0, 10)
-      },
+      trending: [
+        ...trendingMovies.slice(0, 10).map(m => ({
+          id: m.id.toString(),
+          type: 'movie',
+          name: m.title,
+          poster: m.poster_path,
+          imdbRating: m.vote_average?.toFixed(1),
+          year: m.release_date ? new Date(m.release_date).getFullYear() : null
+        })),
+        ...trendingTV.slice(0, 10).map(t => ({
+          id: t.id.toString(),
+          type: 'tv',
+          name: t.name,
+          poster: t.poster_path,
+          imdbRating: t.vote_average?.toFixed(1),
+          year: t.first_air_date ? new Date(t.first_air_date).getFullYear() : null
+        }))
+      ],
       continueWatching,
       watchlist: watchlist.map(w => w.content),
-      newReleases: [] // Will be populated from addon catalogs if needed
+      newReleases: [] 
     });
   } catch (err: any) {
     console.error('Home API Error:', err.message);
