@@ -9,10 +9,11 @@ import styles from './page.module.css';
 export default function HomePage() {
   const [selectedMeta, setSelectedMeta] = useState<any>(null);
 
-  const { data: homeData, isLoading } = useQuery({
+  const { data: homeData, isLoading, error, refetch } = useQuery({
     queryKey: ['home'],
     queryFn: () => api.getHome(),
     refetchInterval: 60000,
+    retry: 2,
   });
 
   const handleSelect = (id: string, type: string) => {
@@ -23,6 +24,32 @@ export default function HomePage() {
     return (
       <div className={styles.loadingWrap}>
         <div className={styles.loader} />
+        <p style={{ marginTop: '1rem', color: 'rgba(255,255,255,0.5)' }}>Loading your entertainment...</p>
+      </div>
+    );
+  }
+
+  if (error || (!homeData?.hero && !homeData?.rows?.length)) {
+    return (
+      <div className={styles.loadingWrap} style={{ padding: '2rem', textAlign: 'center' }}>
+        <h2 style={{ marginBottom: '1rem' }}>⚠️ Content failed to load</h2>
+        <p style={{ color: 'rgba(255,255,255,0.6)', marginBottom: '2rem' }}>
+          {error ? (error as any).message : "Check your internet connection or Cinemata API status."}
+        </p>
+        <button 
+          onClick={() => refetch()}
+          style={{
+            background: 'var(--accent)',
+            color: 'white',
+            border: 'none',
+            padding: '12px 24px',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
+          Retry Connection
+        </button>
       </div>
     );
   }

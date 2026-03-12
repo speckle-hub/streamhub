@@ -26,12 +26,12 @@ export default function Header() {
         <span>StreamHub</span>
       </div>
       <nav className={styles.nav}>
-        <button onClick={() => router.push('/')} className={styles.navLink}>Home</button>
-        <button onClick={() => router.push('/movies')} className={styles.navLink}>Movies</button>
-        <button onClick={() => router.push('/tv')} className={styles.navLink}>TV Shows</button>
-        <button onClick={() => router.push('/anime')} className={styles.navLink}>Anime</button>
-        <button onClick={() => router.push('/watchlist')} className={styles.navLink}>Watchlist</button>
-        <button onClick={handleNsfwClick} className={`${styles.navLink} ${styles.nsfwLink}`}>
+        <button onClick={() => router.push('/')} className={styles.navLink} style={{ color: 'rgba(255,255,255,0.8)' }}>Home</button>
+        <button onClick={() => router.push('/movies')} className={styles.navLink} style={{ color: 'rgba(255,255,255,0.8)' }}>Movies</button>
+        <button onClick={() => router.push('/tv')} className={styles.navLink} style={{ color: 'rgba(255,255,255,0.8)' }}>TV Shows</button>
+        <button onClick={() => router.push('/anime')} className={styles.navLink} style={{ color: 'rgba(255,255,255,0.8)' }}>Anime</button>
+        <button onClick={() => router.push('/watchlist')} className={styles.navLink} style={{ color: 'rgba(255,255,255,0.8)' }}>Watchlist</button>
+        <button onClick={handleNsfwClick} className={`${styles.navLink} ${styles.nsfwLink}`} style={{ color: '#ff4757' }}>
           NSFW <span className={styles.nsfwBadge}>18+</span>
         </button>
       </nav>

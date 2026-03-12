@@ -22,8 +22,17 @@ import { tmdb as tmdbService } from './services/tmdb';
 
 dotenv.config();
 
-const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Validate critical environment variables
+const REQUIRED_ENV = ['TMDB_API_KEY', 'POSTGRES_PRISMA_URL', 'KV_URL', 'JWT_SECRET'];
+const missingEnv = REQUIRED_ENV.filter(key => !process.env[key]);
+
+if (missingEnv.length > 0) {
+  console.error(`❌ CRITICAL ERROR: Missing required environment variables: ${missingEnv.join(', ')}`);
+}
+
+const app = express();
 
 // Security middlewares
 app.use(helmet({
@@ -79,6 +88,39 @@ app.get('/api/diag', async (req, res) => {
 
 app.get('/api/health/addons', (_req, res) => {
   res.json(getAddonHealthSnapshot());
+});
+
+app.get('/api/health', async (req, res) => {
+  const health: any = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    env: {
+      NODE_ENV: process.env.NODE_ENV,
+      VERCEL: !!process.env.VERCEL,
+      TMDB_KEY: process.env.TMDB_API_KEY ? `${process.env.TMDB_API_KEY.substring(0, 4)}***` : 'MISSING',
+      POSTGRES: !!process.env.POSTGRES_PRISMA_URL,
+      KV: !!process.env.KV_URL,
+      JWT_SECRET: !!process.env.JWT_SECRET,
+    },
+    database: 'unknown',
+    cache: 'unknown',
+  };
+
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    health.database = 'connected';
+  } catch (err: any) {
+    health.status = 'error';
+    health.database = `error: ${err.message}`;
+  }
+
+  health.cache = cache.isRedisHealthy() ? 'connected' : 'memory_fallback';
+
+  if (health.status === 'error') {
+    res.status(500).json(health);
+  } else {
+    res.status(200).json(health);
+  }
 });
 
 // Proxy Routes based on Stremio Protocol Requirements

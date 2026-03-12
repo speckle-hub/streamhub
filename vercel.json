@@ -6,18 +6,18 @@
       "use": "@vercel/next"
     },
     {
-      "src": "server/src/index.ts",
+      "src": "server/index.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/server/src/index.ts"
+      "dest": "server/index.ts"
     },
     {
       "src": "/(.*)",
-      "dest": "/client/$1"
+      "dest": "client/$1"
     }
   ]
 }
