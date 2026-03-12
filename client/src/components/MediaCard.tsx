@@ -11,6 +11,8 @@ interface Meta {
   poster?: string;
   year?: number;
   imdbRating?: string;
+  progress?: number;
+  sourceAddon?: string;
 }
 
 interface MediaCardProps {

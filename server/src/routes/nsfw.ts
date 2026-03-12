@@ -1,43 +1,92 @@
-import { Router, Request, Response } from 'express';
+import { Router } from 'express';
 import { prisma } from '../lib/prisma';
+import { addonProxy } from '../services/addonProxy';
 
 const router = Router();
 
-// Mock NSFW search for verification
-router.get('/search', async (req: Request, res: Response) => {
-  const { q } = req.query;
-  
-  // In Phase 4, we'll integrate real NSFW addons
-  const mockResults = [
-    {
-      id: 'mock:nsfw:1',
-      title: `NSFW Result: ${q}`,
-      type: 'movie',
-      posterPath: 'https://via.placeholder.com/342x513?text=NSFW',
-      rating: 9.9
-    }
-  ];
+// GET /api/nsfw/home
+router.get('/home', async (req, res) => {
+  try {
+    const deviceId = req.deviceId || '';
 
-  res.json(mockResults);
+    // Parallel fetch for catalogs and watchlist
+    const [adultTrending, hentaiTrending, nsfwWatchlist, nsfwProgress] = await Promise.all([
+      addonProxy.fetchCatalog('porntube', 'movie', 'popular'), // Adult
+      addonProxy.fetchCatalog('hentaistream', 'movie', 'popular'), // Hentai
+      prisma.nsfwWatchlist.findMany({
+        where: { userId: deviceId },
+        orderBy: { addedAt: 'desc' },
+        take: 20
+      }),
+      prisma.nsfwWatchProgress.findMany({
+        where: { userId: deviceId },
+        orderBy: { updatedAt: 'desc' },
+        take: 10
+      })
+    ]);
+
+    const mapMeta = (m: any, addon: string) => ({
+      id: m.id,
+      name: m.name,
+      poster: m.poster,
+      type: m.type,
+      sourceAddon: addon
+    });
+
+    res.json({
+      adult: (adultTrending.metas || []).slice(0, 15).map((m: any) => mapMeta(m, 'porntube')),
+      hentai: (hentaiTrending.metas || []).slice(0, 15).map((m: any) => mapMeta(m, 'hentaistream')),
+      watchlist: {
+        all: nsfwWatchlist,
+        continue: nsfwProgress.map(p => ({
+          contentId: p.contentId,
+          title: p.title,
+          type: p.contentType,
+          progress: Math.floor((p.position / p.duration) * 100)
+        }))
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: 'Failed to fetch NSFW hub' });
+  }
 });
 
-// History routes
-router.get('/history', async (req: Request, res: Response) => {
-  const deviceId = req.deviceId;
-  const history = await prisma.nsfwWatchProgress.findMany({
-    where: { userId: deviceId },
-    orderBy: { updatedAt: 'desc' },
-    take: 20
-  });
-  res.json(history);
+// Watchlist routes for NSFW
+router.post('/watchlist', async (req, res) => {
+  const { contentId, contentType, title, poster, sourceAddon } = req.body;
+  const userId = req.deviceId || '';
+
+  try {
+    const item = await prisma.nsfwWatchlist.upsert({
+      where: {
+        nsfw_watchlist_unique: { userId, contentId }
+      },
+      create: {
+        userId, contentId, contentType, title, poster, sourceAddon
+      },
+      update: {
+        addedAt: new Date()
+      }
+    });
+    res.json(item);
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
-router.delete('/history', async (req: Request, res: Response) => {
-  const deviceId = req.deviceId;
-  await prisma.nsfwWatchProgress.deleteMany({
-    where: { userId: deviceId }
-  });
-  res.json({ success: true });
+router.delete('/watchlist/:id', async (req, res) => {
+  const { id } = req.params;
+  const userId = req.deviceId || '';
+  try {
+    await prisma.nsfwWatchlist.delete({
+      where: {
+        nsfw_watchlist_unique: { userId, contentId: id }
+      }
+    });
+    res.json({ success: true });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 export default router;

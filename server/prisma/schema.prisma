@@ -14,20 +14,20 @@ model User {
   createdAt     DateTime  @default(now())
   ageVerified   Boolean   @default(false)
   verifiedAt    DateTime?
-  settings      String    @default("{}") // SQLite doesn't support Json, use string
+  settings      String    @default("{}")
   
   // Relations
   watchProgress WatchProgress[]
   watchlist     Watchlist[]
   nsfwProgress  NsfwWatchProgress[]
+  nsfwWatchlist NsfwWatchlist[]
   
   // NSFW settings
-  nsfwPinHash   String?   // bcrypt hash, optional
-  nsfwSettings  String    @default("{}") // SQLite stringified JSON
+  nsfwPinHash   String?   
+  nsfwSettings  String    @default("{}")
 }
 
 model Content {
-  // Cache TMDB data for fast queries
   id            String    @id  // tmdb:123 or imdb:tt123
   type          String    // movie | tv
   title         String
@@ -36,11 +36,10 @@ model Content {
   backdropPath  String?
   releaseDate   DateTime?
   rating        Float?
-  genres        String    // SQLite doesn't support String[], use stringified JSON or comma-separated
+  genres        String    
   
-  // For TV shows
   numberOfSeasons   Int?
-  episodeRunTime    String?   // Comma-separated or JSON string
+  episodeRunTime    String?   
   
   updatedAt     DateTime  @updatedAt
   
@@ -57,14 +56,13 @@ model WatchProgress {
   contentId     String
   content       Content   @relation(fields: [contentId], references: [id], onDelete: Cascade)
   
-  // For TV episodes
   seasonNumber  Int?
   episodeNumber Int?
   episodeTitle  String?
   
-  position      Int       // seconds
+  position      Int       
   duration      Int
-  percent       Float     // 0-100, computed
+  percent       Float     
   completed     Boolean   @default(false)
   updatedAt     DateTime  @updatedAt
   
@@ -72,15 +70,19 @@ model WatchProgress {
 }
 
 model Watchlist {
+  id            String    @id @default(uuid())
   userId        String
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   contentId     String
   content       Content   @relation(fields: [contentId], references: [id], onDelete: Cascade)
   
+  contentType   String    // movie | tv | anime
+  sourceAddon   String?   // addon id
+  watchStatus   String    @default("watch_later") // watch_later, watching, finished, dropped
   addedAt       DateTime  @default(now())
   
-  @@id([userId, contentId], name: "watchlist_id")
+  @@unique([userId, contentId], name: "watchlist_unique")
 }
 
 model NsfwWatchProgress {
@@ -95,4 +97,21 @@ model NsfwWatchProgress {
   position      Int
   duration      Int
   updatedAt     DateTime  @updatedAt
+}
+
+model NsfwWatchlist {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  contentId     String    // usually stremio internal ID
+  contentType   String    // adult | hentai
+  title         String?
+  poster        String?
+  sourceAddon   String?
+  
+  watchStatus   String    @default("watch_later") 
+  addedAt       DateTime  @default(now())
+  
+  @@unique([userId, contentId], name: "nsfw_watchlist_unique")
 }

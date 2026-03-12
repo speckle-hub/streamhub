@@ -1,33 +1,23 @@
-import type { Metadata } from 'next';
+'use client';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
+import Header from '@/components/Header';
+import SearchOverlay from '@/components/SearchOverlay';
+import SettingsModal from '@/components/SettingsModal';
+import { useState } from 'react';
+import DetailModal from '@/components/DetailModal';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
-export const metadata: Metadata = {
-  title: 'StreamHub — Watch Movies, TV & Anime',
-  description: 'Stream content from all your favorite Stremio addons in one place.',
-  manifest: '/manifest.json',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'StreamHub',
-  },
-  formatDetection: {
-    telephone: false,
-  },
-  icons: {
-    shortcut: '/icon-192.png',
-    apple: '/icon-192.png',
-  },
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const [selectedMeta, setSelectedMeta] = useState<any>(null);
+
   return (
     <html lang="en" className={inter.variable}>
       <head>
+        <title>StreamHub — Watch Movies, TV & Anime</title>
         <meta name="application-name" content="StreamHub" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -38,7 +28,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <ServiceWorkerRegister />
         <Providers>
-          {children}
+          <Header />
+          <main style={{ minHeight: '100vh', paddingTop: '80px' }}>
+            {children}
+          </main>
+          
+          <SearchOverlay onSelectMeta={setSelectedMeta} />
+          <SettingsModal />
+          
+          {selectedMeta && (
+            <DetailModal
+              meta={selectedMeta}
+              onClose={() => setSelectedMeta(null)}
+            />
+          )}
         </Providers>
       </body>
     </html>

@@ -33,6 +33,7 @@ interface Stream {
 interface DetailModalProps {
   meta: Meta | null;
   onClose: () => void;
+  isNsfwMode?: boolean;
 }
 
 const QUALITY_COLORS: Record<string, string> = {
@@ -87,11 +88,12 @@ function AddonHealthBadge({ addonKey, healthData }: { addonKey: string; healthDa
 
 type Tab = 'overview' | 'sources';
 
-export default function DetailModal({ meta, onClose }: DetailModalProps) {
+export default function DetailModal({ meta, onClose, isNsfwMode = false }: DetailModalProps) {
   const [tab, setTab] = useState<Tab>('sources');
   const [streams, setStreams] = useState<Stream[]>([]);
   const [loadingStreams, setLoadingStreams] = useState(false);
   const [activeStreamIndex, setActiveStreamIndex] = useState<number | null>(null);
+  const [inWatchlist, setInWatchlist] = useState<boolean>(false);
   const { setStream, currentStream, closePlayer } = usePlayerStore();
 
   const { data: healthData } = useQuery<HealthEntry[]>({
@@ -128,13 +130,37 @@ export default function DetailModal({ meta, onClose }: DetailModalProps) {
       addon: stream.addon,
     });
     setTab('sources'); // Keep on sources so player shows within modal
-  }, [meta?.name, setStream]);
+
+    // Auto-add to watchlist (continue watching)
+    if (meta) {
+      if (isNsfwMode) {
+        api.updateNsfwWatchlist({ contentId: meta.id, contentType: meta.type, title: meta.name, poster: meta.poster, sourceAddon: stream.addon }, 'add').catch(console.error);
+      } else {
+        api.updateWatchlist(meta.id, meta.type, 'add', 'watching', stream.addon).catch(console.error);
+      }
+    }
+  }, [meta, setStream, isNsfwMode]);
 
   const handleNextSource = useCallback(() => {
     if (activeStreamIndex === null) return;
     const next = activeStreamIndex + 1;
     if (next < streams.length) handlePlay(streams[next], next);
   }, [activeStreamIndex, streams, handlePlay]);
+
+  const toggleWatchlist = async () => {
+    if (!meta) return;
+    try {
+      const action = inWatchlist ? 'remove' : 'add';
+      if (isNsfwMode) {
+        await api.updateNsfwWatchlist({ contentId: meta.id, contentType: meta.type, title: meta.name, poster: meta.poster }, action);
+      } else {
+        await api.updateWatchlist(meta.id, meta.type, action, 'watch_later');
+      }
+      setInWatchlist(!inWatchlist);
+    } catch (e) {
+      console.error('Failed to toggle watchlist', e);
+    }
+  };
 
   if (!meta) return null;
 
@@ -152,6 +178,25 @@ export default function DetailModal({ meta, onClose }: DetailModalProps) {
               {meta.imdbRating && <span>⭐ {meta.imdbRating}</span>}
               {meta.genres?.slice(0, 3).map((g) => <span key={g} className={styles.genre}>{g}</span>)}
             </div>
+            <button 
+              className={styles.watchlistBtn} 
+              onClick={toggleWatchlist}
+              style={{
+                marginTop: '12px',
+                padding: '8px 16px',
+                borderRadius: '8px',
+                background: inWatchlist ? '#ef4444' : '#6366f1',
+                color: '#fff',
+                border: 'none',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}
+            >
+              {inWatchlist ? '✓ In Watchlist' : '+ Add to Watchlist'}
+            </button>
           </div>
           <button className={styles.closeBtn} onClick={onClose} aria-label="Close">✕</button>
         </div>

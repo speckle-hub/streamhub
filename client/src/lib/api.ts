@@ -22,8 +22,8 @@ export const api = {
     }
   },
 
-  async search(query: string, type: string = 'movie', nsfw: boolean = false) {
-    const params = new URLSearchParams({ q: query, type, nsfw: String(nsfw) });
+  async search(query: string, nsfw: boolean = false) {
+    const params = new URLSearchParams({ q: query, nsfw: String(nsfw) });
     const res = await fetch(`${API_BASE}/api/content/search?${params}`);
     if (!res.ok) throw new Error('Search failed');
     return res.json();
@@ -42,6 +42,25 @@ export const api = {
     return res.json();
   },
 
+  // Category Pages
+  async getMovies() {
+    const res = await fetch(`${API_BASE}/api/movies`);
+    if (!res.ok) throw new Error('Movies fetch failed');
+    return res.json();
+  },
+
+  async getTVShows() {
+    const res = await fetch(`${API_BASE}/api/tv`);
+    if (!res.ok) throw new Error('TV fetch failed');
+    return res.json();
+  },
+
+  async getAnime() {
+    const res = await fetch(`${API_BASE}/api/anime`);
+    if (!res.ok) throw new Error('Anime fetch failed');
+    return res.json();
+  },
+
   async updateProgress(data: any) {
     const res = await fetch(`${API_BASE}/api/user/progress`, {
       method: 'POST',
@@ -51,19 +70,42 @@ export const api = {
     return res.json();
   },
 
-  async getContinueWatching() {
-    const res = await fetch(`${API_BASE}/api/user/continue-watching`);
-    if (!res.ok) throw new Error('Continue watching fetch failed');
+  async getWatchlist() {
+    const res = await fetch(`${API_BASE}/api/user/watchlist`);
+    if (!res.ok) throw new Error('Watchlist fetch failed');
     return res.json();
   },
 
-  async updateWatchlist(contentId: string, type: string, action: 'add' | 'remove') {
+  async updateWatchlist(contentId: string, type: string, action: 'add' | 'remove', status: string = 'watch_later', sourceAddon?: string) {
     const res = await fetch(`${API_BASE}/api/user/watchlist`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contentId, type, action }),
+      body: JSON.stringify({ contentId, type, action, status, sourceAddon }),
     });
     return res.json();
+  },
+
+  // NSFW Hub
+  async getNsfwHome() {
+    const res = await fetch(`${API_BASE}/api/nsfw/home`);
+    if (!res.ok) throw new Error('NSFW home fetch failed');
+    return res.json();
+  },
+
+  async updateNsfwWatchlist(data: any, action: 'add' | 'remove') {
+    if (action === 'add') {
+      const res = await fetch(`${API_BASE}/api/nsfw/watchlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      return res.json();
+    } else {
+      const res = await fetch(`${API_BASE}/api/nsfw/watchlist/${data.contentId}`, {
+        method: 'DELETE',
+      });
+      return res.json();
+    }
   },
 
   async updateSettings(settings: any) {
@@ -90,16 +132,6 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ pin }),
     });
-    return res.json();
-  },
-
-  async getNsfwHistory() {
-    const res = await fetch(`${API_BASE}/api/nsfw/history`);
-    return res.json();
-  },
-
-  async clearNsfwHistory() {
-    const res = await fetch(`${API_BASE}/api/nsfw/history`, { method: 'DELETE' });
     return res.json();
   },
 

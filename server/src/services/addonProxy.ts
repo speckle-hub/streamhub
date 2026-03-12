@@ -15,104 +15,113 @@ export interface StreamSource {
 export class AddonProxy {
   async fetchManifest(addonId: string): Promise<any> {
     const addon = ADDONS[addonId];
-    if (!addon) throw new Error('Unknown addon');
+    if (!addon) throw new Error(`Unknown addon: ${addonId}`);
     
-    const cacheKey = `manifest:${addonId}`;
+    const cacheKey = `manifest:v2:${addonId}`;
     const cached = await cache.get(cacheKey);
-    if (cached) return cached;
+    if (cached) return JSON.parse(cached);
     
     try {
-      const response = await axios.get(addon.url, { timeout: 10000 });
-      await cache.set(cacheKey, response.data, 3600);
+      const response = await axios.get(addon.url, { 
+        timeout: 8000,
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36' }
+      });
+      await cache.set(cacheKey, JSON.stringify(response.data), 86400); // 24h
       return response.data;
     } catch (err: any) {
-      console.error(`Failed to fetch manifest for ${addonId}:`, err.message);
+      console.error(`[AddonProxy] Failed to fetch manifest for ${addonId}:`, err.message);
       throw err;
     }
   }
   
-  async fetchCatalog(addonId: string, type: string, id: string, extra?: string): Promise<any> {
+  async fetchCatalog(addonId: string, type: string, catalogId: string, extra?: string): Promise<any> {
     const manifest = await this.fetchManifest(addonId);
-    
-    // Find the right catalog from capabilities
-    let catalog;
-    if (extra && extra.startsWith('search=')) {
-      catalog = manifest.catalogs?.find((c: any) => c.type === type && c.extraSupported?.includes('search'));
-    }
-    if (!catalog) {
-      catalog = manifest.catalogs?.find((c: any) => c.type === type && c.id === id);
-    }
-    if (!catalog && manifest.catalogs?.length > 0) {
-      // Fallback: pick the first catalog of this type if it supports search
-      catalog = manifest.catalogs.find((c: any) => c.type === type);
-    }
-
-    if (!catalog) return { metas: [] };
+    const addonConfig = ADDONS[addonId];
     
     let url = '';
+    const baseUrl = addonConfig.url.replace('/manifest.json', '');
     
-    if (extra && catalog.extraSupported && catalog.extraSupported.includes(extra.split('=')[0])) {
-       // Typically catalogs have URLs like https://addon.com/catalog/movie/search/search=inception.json
-       const baseUrl = ADDONS[addonId].url.replace('/manifest.json', '');
-       url = `${baseUrl}/catalog/${type}/${catalog.id}/${extra}.json`;
+    if (extra) {
+       url = `${baseUrl}/catalog/${type}/${catalogId}/${extra}.json`;
     } else {
-       const baseUrl = ADDONS[addonId].url.replace('/manifest.json', '');
-       url = `${baseUrl}/catalog/${type}/${catalog.id}.json`;
+       url = `${baseUrl}/catalog/${type}/${catalogId}.json`;
     }
     
-    const cacheKey = `catalog:${addonId}:${type}:${id}:${extra || 'none'}`;
+    const cacheKey = `catalog:v2:${addonId}:${type}:${catalogId}:${extra || 'none'}`;
     const cached = await cache.get(cacheKey);
-    if (cached) return cached;
+    if (cached) return JSON.parse(cached);
+
+    try {
+      const response = await axios.get(url, { 
+        timeout: 10000,
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+      });
+      await cache.set(cacheKey, JSON.stringify(response.data), parseInt(process.env.CACHE_TTL_CATALOG || '3600'));
+      return response.data;
+    } catch (err: any) {
+      console.error(`[AddonProxy] Failed to fetch catalog for ${addonId} (${url}):`, err.message);
+      return { metas: [] };
+    }
+  }
+
+  async fetchMeta(addonId: string, type: string, id: string): Promise<any> {
+    const addonConfig = ADDONS[addonId];
+    const baseUrl = addonConfig.url.replace('/manifest.json', '');
+    const url = `${baseUrl}/meta/${type}/${id}.json`;
+
+    const cacheKey = `meta:v2:${addonId}:${type}:${id}`;
+    const cached = await cache.get(cacheKey);
+    if (cached) return JSON.parse(cached);
 
     try {
       const response = await axios.get(url, { timeout: 10000 });
-      await cache.set(cacheKey, response.data, parseInt(process.env.CACHE_TTL_CATALOG || '3600'));
+      await cache.set(cacheKey, JSON.stringify(response.data), 86400);
       return response.data;
     } catch (err: any) {
-      console.error(`Failed to fetch catalog for ${addonId}:`, err.message);
-      return { metas: [] };
+      console.error(`[AddonProxy] Failed to fetch meta for ${addonId} (${id}):`, err.message);
+      return { meta: null };
     }
   }
   
   async fetchStreams(addonId: string, type: string, id: string): Promise<StreamSource[]> {
-    const manifest = await this.fetchManifest(addonId);
-    const streamResource = manifest.resources?.find((r: any) => 
-      r.name === 'stream' || (typeof r === 'string' && r === 'stream')
-    );
-    if (!streamResource) return [];
+    const addonConfig = ADDONS[addonId];
+    if (!addonConfig) return [];
     
-    const cacheKey = `stream:${addonId}:${type}:${id}`;
+    const cacheKey = `stream:v2:${addonId}:${type}:${id}`;
     const cached = await cache.get(cacheKey);
     if (cached) return JSON.parse(cached);
 
-    // Construct stream URL from manifest base
-    const baseUrl = ADDONS[addonId].url.replace('/manifest.json', '');
+    const baseUrl = addonConfig.url.replace('/manifest.json', '');
     const streamUrl = `${baseUrl}/stream/${type}/${id}.json`;
     
     try {
       const response = await axios.get(streamUrl, { timeout: 15000 });
       const streams = (response.data.streams || []).map((s: any) => ({
         name: s.name || s.title || `${addonId} Source`,
-        url: this.createProxiedUrl(s.url, addonId),
+        url: this.createProxiedUrl(s.url, addonId, s.infoHash),
         quality: this.extractQuality(s.name || s.title || ''),
         size: s.behaviorHints?.videoSize ? this.formatSize(s.behaviorHints.videoSize) : undefined,
         debridRequired: s.url?.includes('real-debrid') || s.url?.includes('alldebrid') || s.url?.includes('premiumize'),
         addon: addonId,
       }));
       
-      await cache.set(cacheKey, streams, parseInt(process.env.CACHE_TTL_STREAM || '900'));
+      await cache.set(cacheKey, JSON.stringify(streams), parseInt(process.env.CACHE_TTL_STREAM || '900'));
       return streams;
     } catch (err: any) {
-      console.error(`Failed to fetch streams for ${addonId}:`, err.message);
+      console.error(`[AddonProxy] Failed to fetch streams for ${addonId}:`, err.message);
       return [];
     }
   }
   
-  private createProxiedUrl(originalUrl: string, addonId: string): string {
-    if (!originalUrl) return '';
-    // Create signed JWT token that maps to real URL server-side
-    const token = createToken(originalUrl, addonId);
-    return `/api/stream/proxy?token=${token}`;
+  private createProxiedUrl(url: string | undefined, addonId: string, infoHash?: string): string {
+    if (!url && !infoHash) return '';
+    // If it's an infoHash, we might need special handling for debrid later
+    // but for now, we proxy anything that has a URL
+    if (url) {
+      const token = createToken(url, addonId);
+      return `/api/stream/proxy?token=${token}`;
+    }
+    return ''; // Todo: handle magnet/infoHash if needed
   }
   
   private extractQuality(name: string): string | undefined {
@@ -121,7 +130,10 @@ export class AddonProxy {
   }
   
   private formatSize(bytes: number): string {
+    if (bytes === 0) return 'Unknown';
     const gb = bytes / 1024 / 1024 / 1024;
     return `${gb.toFixed(1)} GB`;
   }
 }
+
+export const addonProxy = new AddonProxy();

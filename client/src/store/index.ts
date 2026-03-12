@@ -41,3 +41,5 @@ export const useSearchStore = create<SearchState>((set) => ({
   closeSearch: () => set({ isOpen: false, query: '' }),
   setQuery: (query) => set({ query }),
 }));
+
+export * from './settings';

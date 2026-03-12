@@ -6,118 +6,156 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import MediaCard from '@/components/MediaCard';
 import DetailModal from '@/components/DetailModal';
-import { useSearchStore } from '@/store';
 import { useSettingsStore } from '@/store/settings';
-import styles from './nsfw.module.css';
+import { useSearchStore } from '@/store';
+import styles from '../page.module.css'; // Reuse main layout styles
+import nsfwStyles from './nsfw.module.css';
 
 export default function NsfwPage() {
   const router = useRouter();
   const [selectedMeta, setSelectedMeta] = useState<any>(null);
-  const [query, setQuery] = useState('');
-  const { openSearch } = useSearchStore();
+  const [activeTab, setActiveTab] = useState<'adult' | 'hentai'>('adult');
   const { settings } = useSettingsStore();
 
-  const { data: results, isLoading } = useQuery({
-    queryKey: ['nsfw-search', query],
-    queryFn: () => api.client.get(`/api/nsfw/search?q=${query}`).then(res => res.data),
-    enabled: query.length > 2,
+  const { data: nsfwData, isLoading } = useQuery({
+    queryKey: ['nsfw-home'],
+    queryFn: () => api.getNsfwHome(),
   });
 
-  const { data: history, refetch: refetchHistory } = useQuery({
-    queryKey: ['nsfw-history'],
-    queryFn: () => api.getNsfwHistory(),
-  });
-
-  useEffect(() => {
-    if (settings.autoClearHistory === 'session') {
-      const handleUnload = () => {
-        navigator.sendBeacon(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/nsfw/history`);
-      };
-      window.addEventListener('beforeunload', handleUnload);
-      return () => window.removeEventListener('beforeunload', handleUnload);
-    }
-  }, [settings.autoClearHistory]);
-
-  const handleClearHistory = async () => {
-    if (confirm('Clear all NSFW history?')) {
-      await api.clearNsfwHistory();
-      refetchHistory();
-    }
+  const handleSelect = (id: string, type: string, sourceAddon?: string) => {
+    setSelectedMeta({ id, type, name: 'Loading...', sourceAddon });
   };
 
-  return (
-    <main className={`${styles.main} ${settings.blurNsfw ? styles.blurEnabled : ''}`}>
-      <header className={styles.header}>
-        <div className={styles.logo} onClick={() => window.location.href = '/'}>
-          <span className={styles.logoIcon}>🔞</span>
-          <span>NSFW Section</span>
+  if (isLoading) {
+    return (
+      <main className={`${styles.main} ${settings.blurNsfw ? nsfwStyles.blurEnabled : ''}`}>
+        <div className={styles.loadingWrap}>
+          <div className={styles.loader} />
         </div>
-        <div className={styles.searchBar}>
-          <input 
-            type="text" 
-            placeholder="Search adult content..." 
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className={styles.searchInput}
-          />
-        </div>
-        <button className={styles.clearBtn} onClick={handleClearHistory}>
-          Clear History
-        </button>
-      </header>
+      </main>
+    );
+  }
 
-      <div className={styles.content}>
-        {query.length <= 2 ? (
-          <div className={styles.historySection}>
-            <h2 className={styles.sectionTitle}>NSFW History</h2>
-            {history?.length > 0 ? (
-              <div className={styles.grid}>
-                {history.map((item: any) => (
-                  <MediaCard
-                    key={item.id}
-                    meta={{
-                      id: item.contentId,
-                      type: item.contentType,
-                      name: item.title,
-                      poster: 'https://via.placeholder.com/342x513?text=Adult+History',
-                    }}
-                    onClick={() => setSelectedMeta(item)}
-                  />
-                ))}
-              </div>
-            ) : (
-              <div className={styles.emptyState}>
-                <h2>No History</h2>
-                <p>Your isolated NSFW watch history will appear here.</p>
-              </div>
-            )}
+  // Determine which featured hero to show based on active tab
+  const hero = activeTab === 'adult' 
+    ? nsfwData?.adult?.[0] 
+    : nsfwData?.hentai?.[0];
+
+  const currentTrending = activeTab === 'adult' ? nsfwData?.adult : nsfwData?.hentai;
+
+  return (
+    <main className={`${styles.main} ${settings.blurNsfw ? nsfwStyles.blurEnabled : ''}`}>
+      {/* NSFW Header specific extensions */}
+      <div className={nsfwStyles.nsfwSubNav}>
+        <div className={nsfwStyles.tabs}>
+          <button 
+            className={`${nsfwStyles.tab} ${activeTab === 'adult' ? nsfwStyles.activeTab : ''}`}
+            onClick={() => setActiveTab('adult')}
+          >
+            Adult Center
+          </button>
+          <button 
+            className={`${nsfwStyles.tab} ${activeTab === 'hentai' ? nsfwStyles.activeTab : ''}`}
+            onClick={() => setActiveTab('hentai')}
+          >
+            Hentai Hub
+          </button>
+        </div>
+        <div className={nsfwStyles.nsfwWarning}>
+          ⚠️ 18+ ISOLATED ZONE
+        </div>
+      </div>
+
+      {/* Hero */}
+      {hero && (
+        <section className={styles.hero} style={{ backgroundImage: `url(${hero.poster})` }}>
+          <div className={styles.heroContent}>
+            <div className={styles.heroBadge}>NSFW TRENDING #1</div>
+            <h1 className={styles.heroTitle}>{hero.name}</h1>
+            <p className={styles.heroDesc}>Explore premium 18+ content from selected adult sources.</p>
+            <div className={styles.heroActions}>
+              <button 
+                className={styles.heroPlayBtn} 
+                onClick={() => handleSelect(hero.id, hero.type, hero.sourceAddon)}
+              >
+                ▶ Watch Now
+              </button>
+            </div>
           </div>
-        ) : isLoading ? (
-          <div className={styles.loading}>Searching...</div>
-        ) : results?.length > 0 ? (
-          <div className={styles.grid}>
-            {results.map((item: any) => (
+          <div className={styles.heroOverlay} />
+        </section>
+      )}
+
+      <div className={styles.contentWrap}>
+        
+        {/* Watchlist Section - Always visible, applies to both adult and hentai */}
+        {nsfwData?.watchlist?.continue?.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Continue Watching</h2>
+            <div className={styles.horizontalScroll}>
+              {nsfwData.watchlist.continue.map((item: any) => (
+                <MediaCard
+                  key={item.contentId}
+                  meta={{
+                    id: item.contentId,
+                    type: item.type,
+                    name: item.title,
+                    poster: 'https://via.placeholder.com/342x513?text=Adult+Content', // Hide explicit posters in history
+                    progress: item.progress
+                  }}
+                  onClick={() => handleSelect(item.contentId, item.type)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {nsfwData?.watchlist?.all?.length > 0 && (
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>NSFW Watchlist</h2>
+            <div className={styles.horizontalScroll}>
+              {nsfwData.watchlist.all.map((item: any) => (
+                <MediaCard
+                  key={item.id}
+                  meta={{
+                    id: item.contentId,
+                    type: item.contentType,
+                    name: item.title || 'Unknown',
+                    poster: item.poster,
+                    sourceAddon: item.sourceAddon
+                  }}
+                  onClick={() => handleSelect(item.contentId, item.contentType, item.sourceAddon)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Tab-specific Content */}
+        <section className={styles.section}>
+          <h2 className={styles.sectionTitle}>
+            Trending {activeTab === 'adult' ? 'Adult' : 'Hentai'}
+          </h2>
+          <div className={styles.horizontalScroll}>
+            {currentTrending?.map((item: any) => (
               <MediaCard
                 key={item.id}
                 meta={{
-                  id: item.id,
-                  type: item.type,
-                  name: item.title,
-                  poster: item.posterPath,
+                  ...item,
+                  progress: 0
                 }}
-                onClick={() => setSelectedMeta(item)}
+                onClick={() => handleSelect(item.id, item.type, item.sourceAddon)}
               />
             ))}
           </div>
-        ) : (
-          <div className={styles.noResults}>No adult content found for "{query}"</div>
-        )}
+        </section>
       </div>
 
       {selectedMeta && (
         <DetailModal
           meta={selectedMeta}
           onClose={() => setSelectedMeta(null)}
+          isNsfwMode={true}
         />
       )}
     </main>

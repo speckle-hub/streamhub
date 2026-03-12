@@ -13,6 +13,9 @@ import { nsfwGuard } from './middleware/nsfwGuard';
 import homeRouter from './routes/home';
 import userRouter from './routes/user';
 import nsfwRouter from './routes/nsfw';
+import moviesRouter from './routes/movies';
+import tvRouter from './routes/tv';
+import animeRouter from './routes/anime';
 import { startAddonHealthMonitor, getAddonHealthSnapshot } from './services/addonHealth';
 import { cache } from './services/cache';
 import { tmdb as tmdbService } from './services/tmdb';
@@ -83,6 +86,9 @@ app.use('/api/content', contentRouter);
 app.use('/api/stream', streamRouter);
 app.use('/api/home', homeRouter);
 app.use('/api/user', userRouter);
+app.use('/api/movies', moviesRouter);
+app.use('/api/tv', tvRouter);
+app.use('/api/anime', animeRouter);
 
 // Protected NSFW routes
 app.use('/api/nsfw', nsfwGuard, nsfwRouter);
