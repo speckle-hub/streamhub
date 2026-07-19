@@ -35,23 +35,23 @@ export class AddonProxy {
   }
   
   async fetchCatalog(addonId: string, type: string, catalogId: string, extra?: string): Promise<any> {
-    const manifest = await this.fetchManifest(addonId);
-    const addonConfig = ADDONS[addonId];
-    
-    let url = '';
-    const baseUrl = addonConfig.url.replace('/manifest.json', '');
-    
-    if (extra) {
-       url = `${baseUrl}/catalog/${type}/${catalogId}/${extra}.json`;
-    } else {
-       url = `${baseUrl}/catalog/${type}/${catalogId}.json`;
-    }
-    
-    const cacheKey = `catalog:v2:${addonId}:${type}:${catalogId}:${extra || 'none'}`;
-    const cached = await cache.get(cacheKey);
-    if (cached) return JSON.parse(cached);
-
     try {
+      const manifest = await this.fetchManifest(addonId);
+      const addonConfig = ADDONS[addonId];
+      
+      let url = '';
+      const baseUrl = addonConfig.url.replace('/manifest.json', '');
+      
+      if (extra) {
+         url = `${baseUrl}/catalog/${type}/${catalogId}/${extra}.json`;
+      } else {
+         url = `${baseUrl}/catalog/${type}/${catalogId}.json`;
+      }
+      
+      const cacheKey = `catalog:v2:${addonId}:${type}:${catalogId}:${extra || 'none'}`;
+      const cached = await cache.get(cacheKey);
+      if (cached) return JSON.parse(cached);
+
       const response = await axios.get(url, { 
         timeout: 10000,
         headers: { 'User-Agent': 'Mozilla/5.0' }
@@ -59,7 +59,7 @@ export class AddonProxy {
       await cache.set(cacheKey, JSON.stringify(response.data), parseInt(process.env.CACHE_TTL_CATALOG || '3600'));
       return response.data;
     } catch (err: any) {
-      console.error(`[AddonProxy] Failed to fetch catalog for ${addonId} (${url}):`, err.message);
+      console.error(`[AddonProxy] Failed to fetch catalog for ${addonId}:`, err.message);
       return { metas: [] };
     }
   }
